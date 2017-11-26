@@ -1,0 +1,5 @@
+﻿  ati AGE_Tema2.cpp
+d:\probleme_c++\ati age_tema2\ati age_tema2\ati age_tema2.cpp(35): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+d:\probleme_c++\ati age_tema2\ati age_tema2\ati age_tema2.cpp(99): warning C4101: 'minSample': unreferenced local variable
+  ati AGE_Tema2.vcxproj -> D:\Probleme_C++\ati AGE_Tema2\Debug\ati AGE_Tema2.exe
+  ati AGE_Tema2.vcxproj -> D:\Probleme_C++\ati AGE_Tema2\Debug\ati AGE_Tema2.pdb (Full PDB)
