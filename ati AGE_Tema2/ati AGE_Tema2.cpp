@@ -14,18 +14,19 @@
 #define MAX_VAL 0.0
 #define PI 3.1415926535897
 #define DMAX 1000
-#define EPSILON 1
+#define EPSILON 0.0001
+#define PROB 0.3
 
 
 using namespace std;
 
+int ***M, ***NewM;
+double bestChromosome = MIN_VAL;
 int numberOfBits;
-int ***M;
-double function[numberOfCromosomes + 1];
-double prob[numberOfCromosomes + 1];
-double qprob[numberOfCromosomes + 1];
+double chromosomeRes[numberOfCromosomes + 1];
 
-enum Name {Rastrigins } name;
+
+enum Name { DeJong, Schwefels, Rastrigins } name;
 
 int Calculate_noOfBits(double a, double b) {
 
@@ -36,6 +37,22 @@ int Calculate_noOfBits(double a, double b) {
 	if (n == result)
 		return result;
 	return result + 1;
+}
+
+double DeJong1(double sample[sizeOfSample]) {
+	double sum = 0;
+	for (int index = 0; index < sizeOfSample; index++) {
+		sum += sample[index] * sample[index];
+	}
+	return sum;
+}
+
+double Schwefel(double sample[sizeOfSample]) {
+	double sum = 0;
+	for (int index = 0; index < sizeOfSample; index++) {
+		sum += (-1) * sample[index] * sin(sqrt(abs(sample[index])));
+	}
+	return sum;
 }
 
 double Rastrigin(double sample[sizeOfSample]) {
@@ -50,6 +67,12 @@ double CalculateResult(Name functionName, double sample[sizeOfSample]) {
 
 	double result;
 	switch (functionName) {
+	case DeJong:
+		result = DeJong1(sample);
+		break;
+	case Schwefels:
+		result = Schwefel(sample);
+		break;
 	case Rastrigins:
 		result = 10 * sizeOfSample + Rastrigin(sample);
 		break;
@@ -57,6 +80,10 @@ double CalculateResult(Name functionName, double sample[sizeOfSample]) {
 		break;
 	}
 	return result;
+}
+
+double RandomValue(double lowValue, double highValue) {
+	return lowValue + static_cast <double> (rand()) / (static_cast <double> (RAND_MAX / (highValue - lowValue)));
 }
 
 double ToBase10(int vector[], int length) {
@@ -70,14 +97,22 @@ double ToBase10(int vector[], int length) {
 	return number / 100;
 }
 
+double FitnessFunction(double result) {
+
+	return 1 / (result + EPSILON);
+}
+
 void InitialPopulation() {
-	
+
 	int crom = numberOfCromosomes, rows = sizeOfSample, cols = numberOfBits;
-	M = new int**[crom];
-	for (int i = 0; i < crom; i++){
+	M = new int**[crom], NewM = new int**[crom];
+	for (int i = 0; i < crom; i++) {
 		M[i] = new int*[rows];
-		for (int j = 0; j < rows; j++)
+		NewM[i] = new int*[rows];
+		for (int j = 0; j < rows; j++) {
 			M[i][j] = new int[cols];
+			NewM[i][j] = new int[cols];
+		}
 	}
 
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
@@ -89,64 +124,164 @@ void InitialPopulation() {
 	}//am generat o 3-matrice random de biti / populatie de cromozomi
 }
 
-double FitnessFunction(double result) {
+void CopyData(int survivors[]) {
 
-	return 1 / (result + EPSILON);
+	for (int index = 0; index < numberOfCromosomes; index++) {
+		for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+			for (int index2 = 0; index2 < sizeOfSample; index2++) {
+				for (int bit = 0; bit < numberOfBits; bit++) {
+					NewM[index][index1][index2] = M[survivors[index]][index1][index2];
+				}
+			}
+		}
+	}
 }
+
+void CopyMatrix() {
+
+	for (int index = 0; index < numberOfCromosomes; index++) {
+		for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+			for (int index2 = 0; index2 < sizeOfSample; index2++) {
+				for (int bit = 0; bit < numberOfBits; bit++) {
+					M[index][index1][index2] = NewM[index][index1][index2];
+				}
+			}
+		}
+	}
+}
+
 void RouletteWheel(Name name) {
-	
-	double result, cromosomeSum = 0;
-	double sample[sizeOfSample], minSample[sizeOfSample];
-	double function[numberOfCromosomes + 1];
-	
-		for (int index1 = 0; index1 < numberOfCromosomes; index1++){
+
+	double result, cromosomeSum = 0, random;
+	double sample[sizeOfSample];
+	double prob[numberOfCromosomes + 1];
+	double qprob[numberOfCromosomes + 1];
+
+	int survivorsChrom[numberOfCromosomes];
+
+	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
 		for (int index2 = 0; index2 < sizeOfSample; index2++) {
 			sample[index2] = ToBase10(M[index1][index2], numberOfBits);
 			if (M[index1][index2][0] == 1)
 				sample[index2] *= -1;
 		}
 		result = CalculateResult(name, sample);
-		function[index1] = FitnessFunction(result);
+		chromosomeRes[index1] = FitnessFunction(result);
 	}
 
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-		cromosomeSum += function[index1];
+		cromosomeSum += chromosomeRes[index1];
+		if (chromosomeRes[index1] < bestChromosome) {
+			bestChromosome = chromosomeRes[index1];
+		}
 	}
 
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-		prob[index1] = function[index1] / cromosomeSum;
+		prob[index1] = chromosomeRes[index1] / cromosomeSum;
 	}
-	
+
 	qprob[0] = 0;
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
 		qprob[index1 + 1] = qprob[index1] + prob[index1];
 	}
-	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-		cout << qprob[index1] << ' ';
-	}
 
-	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-	
+
+	for (int index = 0; index < numberOfCromosomes; index++) {
+		random = RandomValue(0, 1);
+		for (int index1 = 0; index1 < numberOfCromosomes; index1++)
+			if (qprob[index1] <= random && random <= qprob[index1 + 1]) {
+				survivorsChrom[index] = index1;
+			}
 	}
+	CopyData(survivorsChrom);
+}
+
+void Mutation() {
+
+	double random;
+	double sample[sizeOfSample];
+	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+		for (int index2 = 0; index2 < sizeOfSample; index2++) {
+			for (int bit = 0; bit < numberOfBits; bit++) {
+				random = RandomValue(0, 1);
+				if (random < PROB) {
+					NewM[index1][index2][bit] = 1 - NewM[index1][index2][bit];
+				}
+			}
+		}
+	}
+}
+
+void Cross() {
+
+}
+
+double EvaluateOffSprings(Name name) {
+
+	double best = MIN_VAL, result;
+	double sample[sizeOfSample];
+	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+		for (int index2 = 0; index2 < sizeOfSample; index2++) {
+			sample[index2] = ToBase10(NewM[index1][index2], numberOfBits);
+			if (NewM[index1][index2][0] == 1)
+				sample[index2] *= -1;
+		}
+		result = CalculateResult(name, sample);
+		chromosomeRes[index1] = FitnessFunction(result);
+		if (chromosomeRes[index1] < best) {
+			best = chromosomeRes[index1];
+		}
+	}
+	return best;
 }
 
 void GeneticAlgorithm(Name functionName) {
-	
+
+	int counter = 0;
+	double result;
+
 	InitialPopulation();
-	RouletteWheel(functionName);
-	
+
+	while (counter < 50) {
+
+		RouletteWheel(functionName);
+		Mutation();
+		Cross();
+		result = EvaluateOffSprings(functionName);
+		if (result < bestChromosome) {
+			CopyMatrix();
+			counter = 0;
+			bestChromosome = result;
+			cout << bestChromosome << '\n';
+		}
+		counter++;
+	}
 }
 
+void SelectFunction(int option) {
 
-void Rastrigins_Init() {
-	name = Rastrigins;
-	numberOfBits = Calculate_noOfBits(-5.12, 5.12);
+	switch (option) {
+	case 1:
+		name = DeJong;
+		numberOfBits = Calculate_noOfBits(-5.12, 5.12);
+		break;
+	case 2:
+		name = Schwefels;
+		numberOfBits = Calculate_noOfBits(-500.0, 500);
+		break;
+	case 3:
+		name = Rastrigins;
+		numberOfBits = Calculate_noOfBits(-5.12, 5.12);
+		break;
+	default:
+		break;
+	}
 }
 
 int main() {
 
 	srand((unsigned int)time(NULL));
-	Rastrigins_Init();
-	GeneticAlgorithm(Rastrigins);
+	SelectFunction(1); //1 - DeJong, 2 - Schwefels, 3 - Rastrigin
+	GeneticAlgorithm(name);
 	return 0;
 }
