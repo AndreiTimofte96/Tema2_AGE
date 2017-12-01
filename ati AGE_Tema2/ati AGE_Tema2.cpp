@@ -7,16 +7,13 @@
 #include <cmath>
 #include <math.h>
 #define sizeOfSample 10
-#define numberOfRuns 10000
 #define numberOfCromosomes 10
 #define maxNoOfParam 3
 #define MIN_VAL 9999999.0
 #define MAX_VAL 0.0
 #define PI 3.1415926535897
-#define DMAX 1000
-#define EPSILON 0.0001
+#define EPSILON 0.001
 #define PROB 0.3
-
 
 using namespace std;
 
@@ -24,7 +21,6 @@ int ***M, ***NewM;
 double bestChromosome = MIN_VAL;
 int numberOfBits;
 double chromosomeRes[numberOfCromosomes + 1];
-
 
 enum Name { DeJong, Schwefels, Rastrigins } name;
 
@@ -126,12 +122,10 @@ void InitialPopulation() {
 
 void CopyData(int survivors[]) {
 
-	for (int index = 0; index < numberOfCromosomes; index++) {
-		for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-			for (int index2 = 0; index2 < sizeOfSample; index2++) {
-				for (int bit = 0; bit < numberOfBits; bit++) {
-					NewM[index][index1][index2] = M[survivors[index]][index1][index2];
-				}
+	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+		for (int index2 = 0; index2 < sizeOfSample; index2++) {
+			for (int bit = 0; bit < numberOfBits; bit++) {
+				NewM[index1][index2][bit] = M[survivors[index1]][index2][bit];
 			}
 		}
 	}
@@ -139,12 +133,10 @@ void CopyData(int survivors[]) {
 
 void CopyMatrix() {
 
-	for (int index = 0; index < numberOfCromosomes; index++) {
-		for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
-			for (int index2 = 0; index2 < sizeOfSample; index2++) {
-				for (int bit = 0; bit < numberOfBits; bit++) {
-					M[index][index1][index2] = NewM[index][index1][index2];
-				}
+	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
+		for (int index2 = 0; index2 < sizeOfSample; index2++) {
+			for (int bit = 0; bit < numberOfBits; bit++) {
+				M[index1][index2][bit] = NewM[index1][index2][bit];
 			}
 		}
 	}
@@ -279,7 +271,6 @@ void SelectFunction(int option) {
 }
 
 int main() {
-
 	srand((unsigned int)time(NULL));
 	SelectFunction(1); //1 - DeJong, 2 - Schwefels, 3 - Rastrigin
 	GeneticAlgorithm(name);
