@@ -7,18 +7,18 @@
 #include <cmath>
 #include <math.h>
 #define sizeOfSample 10
-#define numberOfCromosomes 10
+#define numberOfCromosomes 100
 #define maxNoOfParam 3
 #define MIN_VAL 9999999.0
 #define MAX_VAL 0.0
 #define PI 3.1415926535897
 #define EPSILON 0.001
-#define PROB 0.3
+#define PROB 0.0001
 
 using namespace std;
 
 int ***M, ***NewM;
-double bestChromosome = MIN_VAL;
+double bestChromosome = MIN_VAL, bestValue = MIN_VAL;
 int numberOfBits;
 double chromosomeRes[numberOfCromosomes + 1];
 
@@ -158,6 +158,9 @@ void RouletteWheel(Name name) {
 				sample[index2] *= -1;
 		}
 		result = CalculateResult(name, sample);
+		if (result < bestValue) {
+			bestValue = result;
+		}
 		chromosomeRes[index1] = FitnessFunction(result);
 	}
 
@@ -191,7 +194,6 @@ void RouletteWheel(Name name) {
 void Mutation() {
 
 	double random;
-	double sample[sizeOfSample];
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
 		for (int index2 = 0; index2 < sizeOfSample; index2++) {
 			for (int bit = 0; bit < numberOfBits; bit++) {
@@ -206,6 +208,18 @@ void Mutation() {
 
 void Cross() {
 
+	double random;
+	for (int index1 = 0; index1 < numberOfCromosomes; index1+=2) {
+		for (int index2 = 0; index2 < sizeOfSample; index2++) {
+			for (int bit = 0; bit < numberOfBits; bit++) {
+				random = RandomValue(0, 1);
+				if (random < 0.5){
+					NewM[index1][index2][bit] =  NewM[index1+1][index2][bit];
+				}
+			}
+		}
+	}
+
 }
 
 double EvaluateOffSprings(Name name) {
@@ -219,6 +233,9 @@ double EvaluateOffSprings(Name name) {
 				sample[index2] *= -1;
 		}
 		result = CalculateResult(name, sample);
+		if (result < bestValue) {
+			bestValue = result;
+		}
 		chromosomeRes[index1] = FitnessFunction(result);
 		if (chromosomeRes[index1] < best) {
 			best = chromosomeRes[index1];
@@ -244,10 +261,12 @@ void GeneticAlgorithm(Name functionName) {
 			CopyMatrix();
 			counter = 0;
 			bestChromosome = result;
-			cout << bestChromosome << '\n';
+			cout << bestChromosome << " " << bestValue << '\n';
 		}
 		counter++;
 	}
+	cout << "Best Chromosome: " << bestChromosome << '\n';
+	cout << "Best Value: " << bestValue << '\n';
 }
 
 void SelectFunction(int option) {
