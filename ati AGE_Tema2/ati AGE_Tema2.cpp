@@ -7,19 +7,20 @@
 #include <cmath>
 #include <math.h>
 #define sizeOfSample 10
-#define numberOfCromosomes 100
-#define maxNoOfParam 3
+#define numberOfCromosomes 500 // 1000 best results
 #define MIN_VAL 9999999.0
 #define MAX_VAL 0.0
 #define PI 3.1415926535897
-#define EPSILON 0.001
-#define PROB 0.0001
+#define EPSILON 0.1
+#define PROB 0.001
+#define STOP 50
 
 using namespace std;
 
 int ***M, ***NewM;
 double bestChromosome = MIN_VAL, bestValue = MIN_VAL;
 int numberOfBits;
+double C = -sizeOfSample * 418.9829;
 double chromosomeRes[numberOfCromosomes + 1];
 
 enum Name { DeJong, Schwefels, Rastrigins } name;
@@ -93,9 +94,16 @@ double ToBase10(int vector[], int length) {
 	return number / 100;
 }
 
-double FitnessFunction(double result) {
+double FitnessFunction(Name name, double result) {
 
-	return 1 / (result + EPSILON);
+	switch (name) {
+		case Schwefels:
+			return 1 / abs(result + C);
+			break;
+		default:
+			return 1 / (result + EPSILON);
+			break;
+	}
 }
 
 void InitialPopulation() {
@@ -161,7 +169,7 @@ void RouletteWheel(Name name) {
 		if (result < bestValue) {
 			bestValue = result;
 		}
-		chromosomeRes[index1] = FitnessFunction(result);
+		chromosomeRes[index1] = FitnessFunction(name, result);
 	}
 
 	for (int index1 = 0; index1 < numberOfCromosomes; index1++) {
@@ -236,7 +244,7 @@ double EvaluateOffSprings(Name name) {
 		if (result < bestValue) {
 			bestValue = result;
 		}
-		chromosomeRes[index1] = FitnessFunction(result);
+		chromosomeRes[index1] = FitnessFunction(name, result);
 		if (chromosomeRes[index1] < best) {
 			best = chromosomeRes[index1];
 		}
@@ -251,21 +259,21 @@ void GeneticAlgorithm(Name functionName) {
 
 	InitialPopulation();
 
-	while (counter < 50) {
+	while (counter < STOP) {
 
 		RouletteWheel(functionName);
 		Mutation();
 		Cross();
 		result = EvaluateOffSprings(functionName);
+		cout << bestValue << '\n';// " --> " << result << '\n';
 		if (result < bestChromosome) {
-			CopyMatrix();
 			counter = 0;
 			bestChromosome = result;
-			cout << bestChromosome << " " << bestValue << '\n';
 		}
+		CopyMatrix();
 		counter++;
 	}
-	cout << "Best Chromosome: " << bestChromosome << '\n';
+	//cout << "Best Chromosome: " << bestChromosome << '\n';
 	cout << "Best Value: " << bestValue << '\n';
 }
 
@@ -289,9 +297,16 @@ void SelectFunction(int option) {
 	}
 }
 
+void ReadOption() {
+	int option;
+	cout << "Introduceti optiunea (1 - DeJong, 2 - Schwefels, 3 - Rastrigin): ";
+	cin >> option;
+	SelectFunction(option);
+}
+
 int main() {
 	srand((unsigned int)time(NULL));
-	SelectFunction(1); //1 - DeJong, 2 - Schwefels, 3 - Rastrigin
+	ReadOption();
 	GeneticAlgorithm(name);
 	return 0;
 }
