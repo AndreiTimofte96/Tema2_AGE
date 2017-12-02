@@ -7,7 +7,7 @@
 #include <cmath>
 #include <math.h>
 #define sizeOfSample 10
-#define numberOfCromosomes 500 // 1000 best results
+#define numberOfCromosomes 1000 // 1000 best results
 #define MIN_VAL 9999999.0
 #define MAX_VAL 0.0
 #define PI 3.1415926535897
@@ -20,18 +20,18 @@ using namespace std;
 int ***M, ***NewM;
 double bestChromosome = MIN_VAL, bestValue = MIN_VAL;
 int numberOfBits;
-double C = -sizeOfSample * 418.9829;
+double C = -sizeOfSample * 418.9829, A, B;
 double chromosomeRes[numberOfCromosomes + 1];
-
+double nOfBits;
 enum Name { DeJong, Schwefels, Rastrigins } name;
 
 int Calculate_noOfBits(double a, double b) {
 
 	//10^d, d = 2;
 	double N = (b - a) * 100;
-	double n = log2(N);
-	int result = n;
-	if (n == result)
+	nOfBits = log2(N);
+	int result = nOfBits;
+	if (nOfBits == result)
 		return result;
 	return result + 1;
 }
@@ -92,13 +92,14 @@ double ToBase10(int vector[], int length) {
 		}
 	}
 	return number / 100;
+	//return A + number*(B - A) / (pow(2, nOfBits) - 1);
 }
 
 double FitnessFunction(Name name, double result) {
 
 	switch (name) {
 		case Schwefels:
-			return 1 / abs(result + C);
+			return abs(result + C);
 			break;
 		default:
 			return 1 / (result + EPSILON);
@@ -282,15 +283,18 @@ void SelectFunction(int option) {
 	switch (option) {
 	case 1:
 		name = DeJong;
-		numberOfBits = Calculate_noOfBits(-5.12, 5.12);
+		A = -5.12; B = 5.12;
+		numberOfBits = Calculate_noOfBits(A, B);
 		break;
 	case 2:
+		A = -500.0; B = 500.0;
 		name = Schwefels;
-		numberOfBits = Calculate_noOfBits(-500.0, 500);
+		numberOfBits = Calculate_noOfBits(A, B);
 		break;
 	case 3:
+		A = -5.12; B = 5.12;
 		name = Rastrigins;
-		numberOfBits = Calculate_noOfBits(-5.12, 5.12);
+		numberOfBits = Calculate_noOfBits(A, B);
 		break;
 	default:
 		break;
